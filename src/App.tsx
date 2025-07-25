@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PokemonCard from "./components/PokemonCard";
 import PokemonDetail from "./components/PokemonDetail";
 import "./App.css";
 import type { PokemonStats } from "./types/pokemon";
 import { usePokemonStats } from "./services/pogoApiService";
+import useDebounce from "./services/useDebounce";
 
 function calculateCP(
   baseAttack: number,
@@ -43,23 +44,25 @@ function App() {
     }
   }, [data, isError]);
 
-  const filteredPokemon = pokemonStats.filter((pokemon) => {
-    const matchesSearch = pokemon.pokemon_name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const matchesLeague =
-      selectedLeague === "All" ||
-      (selectedLeague === "Great" && pokemon.cp <= 1500) ||
-      (selectedLeague === "Ultra" && pokemon.cp > 1500 && pokemon.cp <= 2500) ||
-      (selectedLeague === "Master" && pokemon.cp > 2500);
+  const filteredPokemon = useMemo(() => {
+    return pokemonStats.filter((pokemon) => {
+      const matchesSearch = pokemon.pokemon_name
+        .toLowerCase()
+        .includes(debouncedSearchTerm.toLowerCase());
 
-    return matchesSearch && matchesLeague;
-  });
+      const matchesLeague =
+        selectedLeague === "All" ||
+        (selectedLeague === "Great" && pokemon.cp <= 1500) ||
+        (selectedLeague === "Ultra" &&
+          pokemon.cp > 1500 &&
+          pokemon.cp <= 2500) ||
+        (selectedLeague === "Master" && pokemon.cp > 2500);
 
-  useEffect(() => {
-    setPokemonStats(filteredPokemon);
-  }, [filteredPokemon]);
+      return matchesSearch && matchesLeague;
+    });
+  }, [pokemonStats, debouncedSearchTerm, selectedLeague]);
 
   if (!pokemonStats.length) {
     return <p>Loading Pokémon data...</p>;
@@ -94,17 +97,21 @@ function App() {
                 </select>
               </div>
               <div className="pokemon-list">
-                {filteredPokemon.map((pokemon) => (
-                  <a
-                    key={pokemon.pokemon_name}
-                    href={`/${pokemon.pokemon_name}`}
-                  >
-                    <PokemonCard
-                      stats={pokemon}
-                      types={{ pokemon_name: pokemon.pokemon_name, type: [] }}
-                    />
-                  </a>
-                ))}
+                {filteredPokemon.length > 0 ? (
+                  filteredPokemon.map((pokemon) => (
+                    <a
+                      key={`${pokemon.pokemon_name}-${pokemon.form}`}
+                      href={`/${pokemon.pokemon_name}`}
+                    >
+                      <PokemonCard
+                        stats={pokemon}
+                        types={{ pokemon_name: pokemon.pokemon_name, type: [] }}
+                      />
+                    </a>
+                  ))
+                ) : (
+                  <p>No Pokémon match your search.</p>
+                )}
               </div>
             </div>
           }
