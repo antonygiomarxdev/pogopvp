@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { fetchPokemonStats } from "./services/pogoApiService";
 import PokemonCard from "./components/PokemonCard";
 import PokemonDetail from "./components/PokemonDetail";
 import "./App.css";
 import type { PokemonStats } from "./types/pokemon";
+import { usePokemonStats } from "./services/pogoApiService";
 
 function calculateCP(
   baseAttack: number,
@@ -24,31 +24,30 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLeague, setSelectedLeague] = useState("All");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const stats = await fetchPokemonStats();
-        const statsWithCP = stats.map((pokemon) => ({
-          ...pokemon,
-          cp: calculateCP(
-            pokemon.base_attack,
-            pokemon.base_defense,
-            pokemon.base_stamina
-          ),
-        }));
-        setPokemonStats(statsWithCP);
-      } catch (error) {
-        console.error("Error fetching Pokémon stats:", error);
-      }
-    };
+  const { data, isError } = usePokemonStats();
 
-    fetchData();
-  }, []);
+  useEffect(() => {
+    if (data) {
+      const statsWithCP = data.map((pokemon) => ({
+        ...pokemon,
+        cp: calculateCP(
+          pokemon.base_attack,
+          pokemon.base_defense,
+          pokemon.base_stamina
+        ),
+      }));
+      setPokemonStats(statsWithCP);
+    }
+    if (isError) {
+      console.error("Error fetching Pokémon stats");
+    }
+  }, [data, isError]);
 
   const filteredPokemon = pokemonStats.filter((pokemon) => {
     const matchesSearch = pokemon.pokemon_name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+
     const matchesLeague =
       selectedLeague === "All" ||
       (selectedLeague === "Great" && pokemon.cp <= 1500) ||
@@ -57,6 +56,17 @@ function App() {
 
     return matchesSearch && matchesLeague;
   });
+
+  useEffect(() => {
+    setPokemonStats(filteredPokemon);
+  }, [filteredPokemon]);
+
+  if (!pokemonStats.length) {
+    return <p>Loading Pokémon data...</p>;
+  }
+  if (isError) {
+    return <p>Error loading Pokémon data.</p>;
+  }
 
   return (
     <Router>
