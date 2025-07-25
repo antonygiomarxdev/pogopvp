@@ -1,5 +1,10 @@
 import axios from "axios";
-import type { PokemonStats, PokemonType, Move } from "../types/pokemon";
+import type {
+  PokemonStats,
+  PokemonType,
+  Move,
+  PokemonMoves,
+} from "../types/pokemon";
 
 const BASE_URL = "https://pogoapi.net/api/v1";
 
@@ -13,12 +18,7 @@ export const fetchPokemonTypes = async (): Promise<PokemonType[]> => {
   return response.data as PokemonType[];
 };
 
-export const fetchFastMoves = async (): Promise<Move[]> => {
-  const response = await axios.get(`${BASE_URL}/fast_moves.json`);
-  return response.data as Move[];
-};
-
-export const fetchChargedMoves = async (): Promise<Move[]> => {
-  const response = await axios.get(`${BASE_URL}/charged_moves.json`);
-  return response.data as Move[];
+export const fetchMoves = async (): Promise<PokemonMoves[]> => {
+  const response = await axios.get(`${BASE_URL}/current_pokemon_moves.json`);
+  return response.data as PokemonMoves[];
 };
