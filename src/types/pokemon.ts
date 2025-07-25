@@ -14,9 +14,10 @@ export interface PokemonType {
 
 export interface Move {
   move_id: string;
-  move_name: string;
+  name: string;
   type: string;
   power: number;
   duration: number;
   energy_delta: number;
+  stamina_loss_scaler: number;
 }
