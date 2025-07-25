@@ -1,10 +1,5 @@
 import axios from "axios";
-import type {
-  PokemonStats,
-  PokemonType,
-  Move,
-  PokemonMoves,
-} from "../types/pokemon";
+import type { PokemonStats, PokemonType, PokemonMoves } from "../types/pokemon";
 
 const BASE_URL = "https://pogoapi.net/api/v1";
 
